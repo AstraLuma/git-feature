@@ -19,7 +19,7 @@ assert_clean() {
 
 
 autopublish() {
-	AP=`git config --bool --get gitflow.autopublish`
+	AP=`git config --bool --get gitfeature.autopublish`
 	if [ -z $AP ] ; then
 		return 2
 	fi
