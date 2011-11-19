@@ -1,0 +1,108 @@
+#!/bin/sh
+# -*- tab-width: 4; use-tabs: 1; coding: utf-8 -*-
+# vim:tabstop=4:noexpandtab:
+# Uses code from git-flow-feature
+
+usage() {
+	echo "usage: git feature start <name>"
+	echo "       git feature finish [<name>]"
+	echo "       git feature publish [<name>]"
+	echo "       git feature help"
+}
+
+publish() {
+	BRANCH=$1
+	# create remote branch
+	git push "origin" "$BRANCH:refs/heads/$BRANCH"
+	git fetch -q "origin"
+
+	# configure remote tracking
+	git config "branch.$BRANCH.remote" "origin"
+	git config "branch.$BRANCH.merge" "refs/heads/$BRANCH"
+}
+
+current_branch() {
+  ref=$(git symbolic-ref HEAD 2> /dev/null) || return
+  echo ${ref#refs/heads/}
+}
+
+cmd_help() {
+	usage
+	exit 0
+}
+
+cmd_start() {
+	BRANCH=$1
+	AUTOPUBLISH=`git config --bool --get gitflow.autopublish`
+	# create branch
+	if ! git checkout -b "$BRANCH"; then
+		echo "Could not create feature branch '$BRANCH'"
+		exit 1
+	fi
+	
+	if [ $AUTOPUBLISH = "true" ] ; then
+		publish $BRANCH
+	fi
+
+	echo
+	echo "Summary of actions:"
+	echo "- A new branch '$BRANCH' was created"
+	if [ $AUTOPUBLISH = "true" ] ; then
+		echo "- '$BRANCH' was pushed to origin"
+	fi
+	echo "- You are now on branch '$BRANCH'"
+	echo ""
+	echo "Now, start committing on your feature. When done, use:"
+	echo ""
+	echo "     git feature finish $NAME"
+	echo
+}
+
+cmd_finish() {
+	BRANCH=${1:-$(current_branch)}
+	
+	git checkout master
+	git merge --no-ff "$BRANCH"
+	
+	if [ $? -ne 0 ]; then
+		# oops.. we have a merge conflict!
+		echo "There were merge conflicts. To resolve the merge conflict manually, use:"
+		echo "    git mergetool"
+		echo "    git commit"
+	fi
+
+	echo
+	echo "Summary of actions:"
+	echo "- The feature branch '$BRANCH' was merged into 'master'"
+	echo "- Feature branch '$BRANCH' is still available"
+	echo "- You are now on branch 'master'"
+	echo
+}
+
+cmd_publish() {
+	BRANCH=${1:-$(current_branch)}
+	
+	publish $BRANCH
+
+	echo
+	echo "Summary of actions:"
+	echo "- A new remote branch '$BRANCH' was created"
+	echo "- The local branch '$BRANCH' was configured to track the remote branch"
+	echo "- You are now on branch '$BRANCH'"
+	echo
+}
+
+case "$1" in 
+    start)
+        cmd_start $2
+        ;;
+    publish)
+        cmd_publish $2
+        ;;
+    finish)
+        cmd_finish $2
+        ;;
+    *)
+        cmd_help
+        ;;
+esac
