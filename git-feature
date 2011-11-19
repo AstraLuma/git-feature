@@ -10,6 +10,26 @@ usage() {
 	echo "       git feature help"
 }
 
+assert_clean() {
+	if [ -n "$(git status -s 2> /dev/null)" ]; then
+		echo "ERROR: Dirty workspace. Commit and then try again."
+		exit 10
+	fi
+}
+
+
+autopublish() {
+	AP=`git config --bool --get gitflow.autopublish`
+	if [ -z $AP ] ; then
+		return 2
+	fi
+	if [ $AP = "true" ] ; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 publish() {
 	BRANCH=$1
 	# create remote branch
@@ -32,22 +52,22 @@ cmd_help() {
 }
 
 cmd_start() {
+	assert_clean
 	BRANCH=$1
-	AUTOPUBLISH=`git config --bool --get gitflow.autopublish`
 	# create branch
 	if ! git checkout -b "$BRANCH"; then
 		echo "Could not create feature branch '$BRANCH'"
 		exit 1
 	fi
 	
-	if [ $AUTOPUBLISH = "true" ] ; then
+	if autopublish ; then
 		publish $BRANCH
 	fi
 
 	echo
 	echo "Summary of actions:"
 	echo "- A new branch '$BRANCH' was created"
-	if [ $AUTOPUBLISH = "true" ] ; then
+	if autopublish ; then
 		echo "- '$BRANCH' was pushed to origin"
 	fi
 	echo "- You are now on branch '$BRANCH'"
@@ -59,6 +79,7 @@ cmd_start() {
 }
 
 cmd_finish() {
+	assert_clean
 	BRANCH=${1:-$(current_branch)}
 	
 	git checkout master
