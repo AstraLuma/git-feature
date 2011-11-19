@@ -1,7 +1,7 @@
 git feature
 ===========
 
-This is my simple helper for feature branches, as defined by [GitHub Flow](http://scottchacon.com/2011/08/31/github-flow.html). It's primitive and depends on a knowledgable user, but it works.
+This is my simple helper for feature branches, as defined by [GitHub Flow](http://scottchacon.com/2011/08/31/github-flow.html). It's primitive and depends on a knowledgable user, but it works. I'm using it in my fork of [tgg-BotSteve](/astronouth7303/tgg-BotSteve).
 
 Commands
 --------
